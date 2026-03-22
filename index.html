@@ -290,20 +290,83 @@
 
   function wtSubmit() {
     if (!document.getElementById("wt-privacy").checked) { alert("Devi accettare la Privacy Policy per procedere."); return; }
-    var tour = document.getElementById("wt-tour").value.split("|")[0];
+
+    var tourRaw = document.getElementById("wt-tour").value;
+    var tourParts = tourRaw.split("|");
+    var tour = tourParts[0];
+    var tourData = tourParts[1] || "";
     var nome = document.getElementById("wt-nome").value;
     var cognome = document.getElementById("wt-cognome").value;
-    var posti = document.getElementById("wt-posti").value;
+    var nascita = document.getElementById("wt-nascita").value;
+    var cf = document.getElementById("wt-cf").value;
+    var tipodoc = document.getElementById("wt-tipodoc").value;
+    var ndoc = document.getElementById("wt-ndoc").value;
+    var indirizzo = document.getElementById("wt-indirizzo").value;
     var tel = document.getElementById("wt-tel").value;
-    document.getElementById("wt-summary").innerHTML =
-      "<div class='wt-sum-row'><span>Tour</span><span>"+tour+"</span></div>"+
-      "<div class='wt-sum-row'><span>Intestatario</span><span>"+nome+" "+cognome+"</span></div>"+
-      "<div class='wt-sum-row'><span>Posti richiesti</span><span>"+posti+"</span></div>"+
-      "<div class='wt-sum-row'><span>Telefono</span><span>"+tel+"</span></div>";
-    var steps = document.querySelectorAll(".wt-step"); for (var i=0; i<steps.length; i++) { steps[i].classList.remove("wt-active"); }
-    document.getElementById("wt-step5").classList.add("wt-active");
-    for (var j=1; j<=4; j++) { document.getElementById("wt-s"+j).classList.add("on"); }
-    window.scrollTo({top:0,behavior:"smooth"});
+    var email = document.getElementById("wt-email").value;
+    var posti = document.getElementById("wt-posti").value;
+    var camera = document.getElementById("wt-camera").value;
+    var note = document.getElementById("wt-note").value;
+
+    // Raccoglie altri viaggiatori
+    var paxBoxes = document.querySelectorAll(".wt-pax-box");
+    var altriPax = [];
+    paxBoxes.forEach(function(box, i) {
+      var inputs = box.querySelectorAll("input");
+      altriPax.push("Viaggiatore "+(i+1)+": "+
+        (inputs[0]?inputs[0].value:"")+" "+
+        (inputs[1]?inputs[1].value:"")+" | Nato: "+
+        (inputs[2]?inputs[2].value:"")+" | Doc: "+
+        (inputs[3]?inputs[3].value:""));
+    });
+
+    var formData = new FormData();
+    formData.append("Tour", tour + " (" + tourData + ")");
+    formData.append("Posti richiesti", posti);
+    formData.append("Tipo camera", camera || "Non specificata");
+    formData.append("Nome", nome);
+    formData.append("Cognome", cognome);
+    formData.append("Data di nascita", nascita);
+    formData.append("Codice fiscale", cf);
+    formData.append("Tipo documento", tipodoc);
+    formData.append("Numero documento", ndoc);
+    formData.append("Indirizzo", indirizzo);
+    formData.append("Telefono", tel);
+    formData.append("Email", email || "Non fornita");
+    if (altriPax.length > 0) formData.append("Altri viaggiatori", altriPax.join(" | "));
+    if (note) formData.append("Note speciali", note);
+    formData.append("_subject", "Nuova prenotazione – " + nome + " " + cognome + " – " + tour);
+
+    // Mostra loading sul bottone
+    var btn = document.querySelector("[data-wt='submit']");
+    if (btn) { btn.textContent = "Invio in corso..."; btn.disabled = true; }
+
+    fetch("https://formspree.io/f/xreywked", {
+      method: "POST",
+      body: formData,
+      headers: { "Accept": "application/json" }
+    })
+    .then(function(response) {
+      if (response.ok) {
+        document.getElementById("wt-summary").innerHTML =
+          "<div class='wt-sum-row'><span>Tour</span><span>"+tour+"</span></div>"+
+          "<div class='wt-sum-row'><span>Intestatario</span><span>"+nome+" "+cognome+"</span></div>"+
+          "<div class='wt-sum-row'><span>Posti richiesti</span><span>"+posti+"</span></div>"+
+          "<div class='wt-sum-row'><span>Telefono</span><span>"+tel+"</span></div>";
+        var steps = document.querySelectorAll(".wt-step");
+        for (var i=0; i<steps.length; i++) { steps[i].classList.remove("wt-active"); }
+        document.getElementById("wt-step5").classList.add("wt-active");
+        for (var j=1; j<=4; j++) { document.getElementById("wt-s"+j).classList.add("on"); }
+        window.scrollTo({top:0,behavior:"smooth"});
+      } else {
+        alert("Si è verificato un errore. Riprova o contattaci direttamente.");
+        if (btn) { btn.textContent = "Invia prenotazione ✓"; btn.disabled = false; }
+      }
+    })
+    .catch(function() {
+      alert("Errore di connessione. Controlla la tua rete e riprova.");
+      if (btn) { btn.textContent = "Invia prenotazione ✓"; btn.disabled = false; }
+    });
   }
 
   // Event delegation - works even with WordPress stripping onclick
