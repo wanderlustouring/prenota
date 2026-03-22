@@ -332,9 +332,9 @@
     formData.append("Numero documento", ndoc);
     formData.append("Indirizzo", indirizzo);
     formData.append("Telefono", tel);
-    formData.append("Email", email || "Non fornita");
-    formData.append("email", email || "noreply@wanderlustouring.it");
-    formData.append("_replyto", email || "noreply@wanderlustouring.it");
+    formData.append("Email cliente", email || "Non fornita");
+    formData.append("email", email || "info@wanderlustouring.it");
+    formData.append("_replyto", email || "info@wanderlustouring.it");
     if (altriPax.length > 0) formData.append("Altri viaggiatori", altriPax.join(" | "));
     if (note) formData.append("Note speciali", note);
     formData.append("_subject", "Nuova prenotazione – " + nome + " " + cognome + " – " + tour);
