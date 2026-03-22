@@ -333,6 +333,8 @@
     formData.append("Indirizzo", indirizzo);
     formData.append("Telefono", tel);
     formData.append("Email", email || "Non fornita");
+    formData.append("email", email || "noreply@wanderlustouring.it");
+    formData.append("_replyto", email || "noreply@wanderlustouring.it");
     if (altriPax.length > 0) formData.append("Altri viaggiatori", altriPax.join(" | "));
     if (note) formData.append("Note speciali", note);
     formData.append("_subject", "Nuova prenotazione – " + nome + " " + cognome + " – " + tour);
@@ -341,10 +343,17 @@
     var btn = document.querySelector("[data-wt='submit']");
     if (btn) { btn.textContent = "Invio in corso..."; btn.disabled = true; }
 
+    // Convert FormData to JSON object for Formspree
+    var jsonData = {};
+    formData.forEach(function(value, key) { jsonData[key] = value; });
+
     fetch("https://formspree.io/f/xreywked", {
       method: "POST",
-      body: formData,
-      headers: { "Accept": "application/json" }
+      body: JSON.stringify(jsonData),
+      headers: { 
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      }
     })
     .then(function(response) {
       if (response.ok) {
@@ -359,12 +368,12 @@
         for (var j=1; j<=4; j++) { document.getElementById("wt-s"+j).classList.add("on"); }
         window.scrollTo({top:0,behavior:"smooth"});
       } else {
-        alert("Si è verificato un errore. Riprova o contattaci direttamente.");
+        response.text().then(function(t){ alert("Errore "+response.status+": "+t); });
         if (btn) { btn.textContent = "Invia prenotazione ✓"; btn.disabled = false; }
       }
     })
-    .catch(function() {
-      alert("Errore di connessione. Controlla la tua rete e riprova.");
+    .catch(function(err) {
+      alert("Errore di connessione: " + err.message + ". Controlla la tua rete e riprova.");
       if (btn) { btn.textContent = "Invia prenotazione ✓"; btn.disabled = false; }
     });
   }
